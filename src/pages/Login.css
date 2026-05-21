@@ -11,19 +11,34 @@
   font-family: Arial, sans-serif;
 }
 
-/* 🔥 MAIN FIXED CARD */
+/* LOGIN CARD */
 .login-card {
   background: rgba(30, 41, 59, 0.95);
   border-radius: 16px;
   width: 100%;
   max-width: 400px;
-  height: 480px; /* fixed height */
+  padding: 40px;
 
   display: flex;
   flex-direction: column;
-  justify-content: space-evenly; /* PERFECT BALANCE */
+  justify-content: center;
+  gap: 15px;
 
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
+}
+
+/* REGISTER CARD */
+.register-card {
+  background: rgba(30, 41, 59, 0.95);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 400px;
   padding: 40px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+
   box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
 }
 
@@ -32,12 +47,13 @@
   text-align: center;
   font-size: 26px;
   color: white;
+  margin-bottom: 10px;
 }
 
-/* INPUTS */
+/* INPUT */
 .login-input {
   width: 100%;
-  padding: 12px 14px;
+  padding: 12px 40px 12px 14px;
   border-radius: 8px;
   border: none;
   outline: none;
@@ -48,6 +64,29 @@
 .login-input:focus {
   border: 2px solid #3b82f6;
   background: white;
+}
+
+/* PASSWORD WRAPPER */
+.password-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+/* EYE ICON */
+.eye-icon {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  font-size: 18px;
+  color: #334155;
+  padding: 5px;
+  transition: 0.2s;
+}
+
+.eye-icon:hover {
+  color: #3b82f6;
 }
 
 /* BUTTON */
@@ -61,10 +100,18 @@
   font-size: 15px;
   cursor: pointer;
   transition: 0.3s;
+  margin-top: 5px;
 }
 
 .login-button:hover {
   background: #2563eb;
+}
+
+/* ERROR TEXT */
+.error {
+  color: #f87171;
+  font-size: 12px;
+  margin-top: -8px;
 }
 
 /* FOOTER */
@@ -72,6 +119,7 @@
   text-align: center;
   font-size: 14px;
   color: #cbd5f5;
+  margin-top: 10px;
 }
 
 .login-link {
@@ -82,3 +130,4 @@
 .login-link:hover {
   text-decoration: underline;
 }
+
