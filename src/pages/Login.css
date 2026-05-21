@@ -176,3 +176,7 @@
 .resend-text:hover {
   text-decoration: underline;
 }
+.login-button:disabled {
+  background: #64748b;
+  cursor: not-allowed;
+}

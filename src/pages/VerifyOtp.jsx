@@ -1,20 +1,31 @@
 import { useRef, useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import "./Login.css";
 
 export default function VerifyOtp() {
   const [otp, setOtp] = useState(["", "", "", ""]);
   const inputs = useRef([]);
 
-  // 🔥 TIMER STATE
   const [timer, setTimer] = useState(30);
   const [canResend, setCanResend] = useState(false);
 
-  // 🔥 auto focus first input
+  const navigate = useNavigate();
+  const location = useLocation();
+  const email = location.state?.email;
+
+  // 🔐 block direct access
+  useEffect(() => {
+    if (!email) {
+      navigate("/");
+    }
+  }, [email, navigate]);
+
+  // 🔥 focus first input
   useEffect(() => {
     inputs.current[0]?.focus();
   }, []);
 
-  // 🔥 TIMER LOGIC
+  // 🔥 timer
   useEffect(() => {
     if (timer === 0) {
       setCanResend(true);
@@ -28,6 +39,17 @@ export default function VerifyOtp() {
     return () => clearInterval(interval);
   }, [timer]);
 
+  const handleVerify = () => {
+    const finalOtp = otp.join("");
+
+    if (finalOtp.length !== 4) return;
+
+    localStorage.setItem("token", "dummy_token");
+
+    alert("OTP Verified ✅");
+    navigate("/dashboard");
+  };
+
   const handleChange = (value, index) => {
     if (!/^[0-9]?$/.test(value)) return;
 
@@ -35,9 +57,16 @@ export default function VerifyOtp() {
     newOtp[index] = value;
     setOtp(newOtp);
 
-    // move to next
     if (value && index < 3) {
       inputs.current[index + 1].focus();
+    }
+
+    // 🔥 AUTO VERIFY
+    if (index === 3 && value) {
+      const finalOtp = [...newOtp].join("");
+      if (finalOtp.length === 4) {
+        setTimeout(() => handleVerify(), 200);
+      }
     }
   };
 
@@ -47,27 +76,21 @@ export default function VerifyOtp() {
     }
   };
 
-  const handleVerify = () => {
-    const finalOtp = otp.join("");
-
-    if (finalOtp.length !== 4) {
-      alert("Enter complete OTP ❌");
-      return;
-    }
-
-    console.log("OTP:", finalOtp);
-    alert("OTP Verified ✅");
-  };
-
-  // 🔥 UPDATED RESEND FUNCTION
   const handleResend = () => {
     if (!canResend) return;
 
     alert("OTP Resent 🔁");
 
+    setOtp(["", "", "", ""]);
+    inputs.current[0]?.focus();
+
     setTimer(30);
     setCanResend(false);
   };
+
+  const maskedEmail = email
+    ? email.replace(/(.{2}).+(@.+)/, "$1****$2")
+    : "your email";
 
   return (
     <div className="login-container">
@@ -75,17 +98,15 @@ export default function VerifyOtp() {
         <h2 className="login-title">Verify OTP</h2>
 
         <p className="otp-text">
-          Enter the OTP sent to your email
+          Enter the OTP sent to {maskedEmail}
         </p>
 
-        {/* OTP INPUTS */}
         <div className="otp-container">
           {otp.map((digit, index) => (
             <input
               key={index}
               type="text"
               inputMode="numeric"
-              pattern="[0-9]*"
               maxLength="1"
               className="otp-input"
               value={digit}
@@ -100,11 +121,14 @@ export default function VerifyOtp() {
           ))}
         </div>
 
-        <button onClick={handleVerify} className="login-button">
+        <button
+          onClick={handleVerify}
+          className="login-button"
+          disabled={otp.join("").length !== 4}
+        >
           Verify OTP
         </button>
 
-        {/* 🔥 TIMER UI */}
         {canResend ? (
           <p className="resend-text" onClick={handleResend}>
             Resend OTP
