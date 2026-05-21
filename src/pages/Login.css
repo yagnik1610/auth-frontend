@@ -131,3 +131,48 @@
   text-decoration: underline;
 }
 
+/* OTP text */
+.otp-text {
+  text-align: center;
+  font-size: 14px;
+  color: #cbd5f5;
+  margin-bottom: 10px;
+}
+
+/* OTP container */
+.otp-container {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}
+
+/* OTP input */
+.otp-input {
+  width: 60px;
+  height: 60px;
+  text-align: center;
+  font-size: 20px;
+  border-radius: 10px;
+  border: none;
+  outline: none;
+  background: #e2e8f0;
+  transition: 0.2s;
+}
+
+.otp-input:focus {
+  border: 2px solid #3b82f6;
+  background: white;
+}
+
+/* resend */
+.resend-text {
+  text-align: center;
+  margin-top: 10px;
+  color: #3b82f6;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.resend-text:hover {
+  text-decoration: underline;
+}
