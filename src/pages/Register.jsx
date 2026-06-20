@@ -1,8 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
-import { FaEye, FaEyeSlash } from "react-icons/fa";
-import "./Login.css";
+import API from "../services/api";
 
 export default function Register() {
   const [form, setForm] = useState({
@@ -12,128 +10,135 @@ export default function Register() {
     confirmPassword: "",
   });
 
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [errors, setErrors] = useState({});
+  const [error, setError] = useState("");        // 🔴 inline error
+  const [toast, setToast] = useState("");        // 🔔 success toast
+  const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
-  const validate = () => {
-    let newErrors = {};
-
-    if (!form.name.trim()) newErrors.name = "Name is required";
-    if (!form.email.includes("@")) newErrors.email = "Enter valid email";
-    if (form.password.length < 6)
-      newErrors.password = "Password must be at least 6 characters";
-    if (form.password !== form.confirmPassword)
-      newErrors.confirmPassword = "Passwords do not match";
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    setError(""); // clear error on typing
   };
 
   const handleRegister = async () => {
-    if (!validate()) return;
+    if (
+      !form.name ||
+      !form.email ||
+      !form.password ||
+      form.password !== form.confirmPassword
+    ) {
+      setError("Check your inputs");
+      return;
+    }
 
     try {
-      await axios.post("http://localhost:5000/api/auth/register", {
-        name: form.name,
+      setLoading(true);
+
+      await API.post("/auth/register", {
+        username: form.name,
         email: form.email,
         password: form.password,
       });
 
-      alert("Registered successfully ✅");
-      navigate("/");
+      // 🔔 SUCCESS TOAST
+      setToast("OTP sent to your email");
+
+      setTimeout(() => {
+        setToast("");
+        navigate("/verify-otp", {
+          state: { email: form.email },
+        });
+      }, 1500);
+
     } catch (err) {
-      console.error(err);
-      alert("Registration failed ❌");
+      setError(err.response?.data?.message || "Register failed");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="login-container">
-      <div className="register-card">
-        <h2 className="login-title">Register</h2>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-black">
 
-        {/* NAME */}
+      <div className="bg-white/5 backdrop-blur-lg border border-white/10 p-10 rounded-2xl w-[420px] shadow-2xl">
+
+        <h2 className="text-2xl font-bold text-white text-center mb-4">
+          Register
+        </h2>
+
         <input
-          type="text"
           name="name"
-          placeholder="Full Name"
-          className="login-input"
-          value={form.name}
+          placeholder="Name"
+          className="w-full mb-3 p-3 rounded-xl bg-[#020617] text-white border border-gray-700 
+          focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/40 outline-none"
           onChange={handleChange}
         />
-        {errors.name && <p className="error">{errors.name}</p>}
 
-        {/* EMAIL */}
         <input
-          type="email"
           name="email"
           placeholder="Email"
-          className="login-input"
-          value={form.email}
+          className="w-full mb-3 p-3 rounded-xl bg-[#020617] text-white border border-gray-700 
+          focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/40 outline-none"
           onChange={handleChange}
         />
-        {errors.email && <p className="error">{errors.email}</p>}
 
-        {/* PASSWORD */}
-        <div className="password-wrapper">
-          <input
-            type={showPassword ? "text" : "password"}
-            name="password"
-            placeholder="Password"
-            className="login-input"
-            value={form.password}
-            onChange={handleChange}
-          />
-          <span
-            className="eye-icon"
-            onClick={() => setShowPassword(!showPassword)}
-          >
-            {showPassword ? <FaEyeSlash /> : <FaEye />}
-          </span>
-        </div>
-        {errors.password && <p className="error">{errors.password}</p>}
+        <input
+          name="password"
+          type="password"
+          placeholder="Password"
+          className="w-full mb-3 p-3 rounded-xl bg-[#020617] text-white border border-gray-700 
+          focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/40 outline-none"
+          onChange={handleChange}
+        />
 
-        {/* CONFIRM PASSWORD */}
-        <div className="password-wrapper">
-          <input
-            type={showConfirmPassword ? "text" : "password"}
-            name="confirmPassword"
-            placeholder="Confirm Password"
-            className="login-input"
-            value={form.confirmPassword}
-            onChange={handleChange}
-          />
-          <span
-            className="eye-icon"
-            onClick={() =>
-              setShowConfirmPassword(!showConfirmPassword)
-            }
-          >
-            {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
-          </span>
-        </div>
-        {errors.confirmPassword && (
-          <p className="error">{errors.confirmPassword}</p>
-        )}
+        <input
+          name="confirmPassword"
+          type="password"
+          placeholder="Confirm Password"
+          className="w-full mb-4 p-3 rounded-xl bg-[#020617] text-white border border-gray-700 
+          focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/40 outline-none"
+          onChange={handleChange}
+        />
 
-        <button onClick={handleRegister} className="login-button">
-          Register
+        <button
+          onClick={handleRegister}
+          disabled={loading}
+          className="w-full py-3 rounded-xl font-semibold text-white 
+          bg-gradient-to-r from-indigo-500 to-purple-600
+          flex items-center justify-center gap-2
+          transition-all duration-300 hover:scale-105 disabled:opacity-50"
+        >
+          {loading && (
+            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+          )}
+          {loading ? "Registering..." : "Register"}
         </button>
 
-        <p className="login-footer">
+        {/* 🔴 INLINE ERROR (BELOW BUTTON) */}
+        {error && (
+        <p className="mt-3 text-sm text-red-400 text-center">
+        {error}
+        </p>
+        )}
+
+        <p className="text-center text-gray-400 mt-4">
           Already have an account?{" "}
-          <Link to="/" className="login-link">
+          <Link to="/" className="text-indigo-400 hover:underline">
             Login
           </Link>
         </p>
       </div>
+
+      {/* 🔔 TOAST (BOTTOM CENTER) */}
+      {toast && (
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 
+        bg-green-500/10 text-green-400 border border-green-500/20
+        px-6 py-3 rounded-xl shadow-lg backdrop-blur-md
+        animate-fade-in">
+          ✔ {toast}
+        </div>
+      )}
     </div>
   );
 }

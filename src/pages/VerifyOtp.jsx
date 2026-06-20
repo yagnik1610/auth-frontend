@@ -1,53 +1,60 @@
 import { useRef, useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import "./Login.css";
+import API from "../services/api";
 
 export default function VerifyOtp() {
-  const [otp, setOtp] = useState(["", "", "", ""]);
+  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+  const [status, setStatus] = useState("idle"); // idle | loading | success | error
+
+  const [error, setError] = useState("");   // 🔴 inline error
+  const [toast, setToast] = useState("");   // 🔔 success toast
+
   const inputs = useRef([]);
-
-  const [timer, setTimer] = useState(30);
-  const [canResend, setCanResend] = useState(false);
-
   const navigate = useNavigate();
   const location = useLocation();
   const email = location.state?.email;
 
-  // 🔐 block direct access
   useEffect(() => {
-    if (!email) {
-      navigate("/");
-    }
+    if (!email) navigate("/");
   }, [email, navigate]);
 
-  // 🔥 focus first input
   useEffect(() => {
     inputs.current[0]?.focus();
   }, []);
 
-  // 🔥 timer
-  useEffect(() => {
-    if (timer === 0) {
-      setCanResend(true);
-      return;
-    }
-
-    const interval = setInterval(() => {
-      setTimer((prev) => prev - 1);
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [timer]);
-
-  const handleVerify = () => {
+  const handleVerify = async () => {
     const finalOtp = otp.join("");
+    if (finalOtp.length !== 6) return;
 
-    if (finalOtp.length !== 4) return;
+    try {
+      setStatus("loading");
+      setError("");
 
-    localStorage.setItem("token", "dummy_token");
+      await API.post("/auth/verify-email", {
+        email,
+        otp: finalOtp,
+      });
 
-    alert("OTP Verified ✅");
-    navigate("/dashboard");
+      setStatus("success");
+
+      // 🔔 SUCCESS TOAST
+      setToast("OTP verified successfully");
+
+      setTimeout(() => {
+        setToast("");
+        navigate("/");
+      }, 1500);
+
+    } catch (err) {
+      setStatus("error");
+
+      // 🔴 INLINE ERROR
+      setError(err.response?.data?.message || "Invalid OTP");
+
+      setTimeout(() => {
+        setStatus("idle");
+      }, 1500);
+    }
   };
 
   const handleChange = (value, index) => {
@@ -57,16 +64,8 @@ export default function VerifyOtp() {
     newOtp[index] = value;
     setOtp(newOtp);
 
-    if (value && index < 3) {
+    if (value && index < 5) {
       inputs.current[index + 1].focus();
-    }
-
-    // 🔥 AUTO VERIFY
-    if (index === 3 && value) {
-      const finalOtp = [...newOtp].join("");
-      if (finalOtp.length === 4) {
-        setTimeout(() => handleVerify(), 200);
-      }
     }
   };
 
@@ -76,69 +75,85 @@ export default function VerifyOtp() {
     }
   };
 
-  const handleResend = () => {
-    if (!canResend) return;
-
-    alert("OTP Resent 🔁");
-
-    setOtp(["", "", "", ""]);
-    inputs.current[0]?.focus();
-
-    setTimer(30);
-    setCanResend(false);
-  };
-
-  const maskedEmail = email
-    ? email.replace(/(.{2}).+(@.+)/, "$1****$2")
-    : "your email";
-
   return (
-    <div className="login-container">
-      <div className="login-card">
-        <h2 className="login-title">Verify OTP</h2>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-black">
 
-        <p className="otp-text">
-          Enter the OTP sent to {maskedEmail}
+      <div className="bg-white/5 backdrop-blur-lg border border-white/10 p-10 rounded-2xl w-[460px] shadow-2xl text-center">
+
+        <h2 className="text-2xl font-semibold text-white mb-2">
+          Verify OTP
+        </h2>
+
+        <p className="text-gray-400 text-sm mb-4">
+          OTP sent to {email}
         </p>
 
-        <div className="otp-container">
-          {otp.map((digit, index) => (
+        {/* ❌ REMOVED GREEN SUCCESS TEXT */}
+
+        {/* OTP BOXES */}
+        <div className="flex justify-center items-center gap-2 md:gap-3 mb-8 px-2">
+          {otp.map((d, i) => (
             <input
-              key={index}
-              type="text"
-              inputMode="numeric"
+              key={i}
               maxLength="1"
-              className="otp-input"
-              value={digit}
-              onChange={(e) =>
-                handleChange(e.target.value, index)
-              }
-              onKeyDown={(e) =>
-                handleKeyDown(e, index)
-              }
-              ref={(el) => (inputs.current[index] = el)}
+              value={d}
+              onChange={(e) => handleChange(e.target.value, i)}
+              onKeyDown={(e) => handleKeyDown(e, i)}
+              ref={(el) => (inputs.current[i] = el)}
+              className={`w-12 h-12 md:w-14 md:h-14
+              text-xl md:text-2xl font-medium text-center
+              rounded-xl
+              bg-[#020617] text-white
+
+              border border-gray-700
+              outline-none
+
+              transition-all duration-200
+
+              focus:border-indigo-500
+              focus:ring-1 focus:ring-indigo-500
+
+              ${status === "loading" ? "border-indigo-500 shadow-[0_0_12px_#6366f1]" : ""}
+              ${status === "success" ? "border-green-500 shadow-[0_0_12px_#22c55e]" : ""}
+              ${status === "error" ? "border-red-500 shadow-[0_0_12px_#ef4444]" : ""}
+              `}
             />
           ))}
         </div>
 
+        {/* BUTTON */}
         <button
           onClick={handleVerify}
-          className="login-button"
-          disabled={otp.join("").length !== 4}
+          disabled={otp.join("").length !== 6 || status === "loading"}
+          className="w-full py-3 rounded-xl font-medium text-white 
+          bg-gradient-to-r from-indigo-500 to-purple-600
+          flex items-center justify-center gap-2
+          transition-all duration-200 disabled:opacity-50"
         >
-          Verify OTP
+          {status === "loading" && (
+            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+          )}
+
+          {status === "loading" ? "Verifying..." : "Verify OTP"}
         </button>
 
-        {canResend ? (
-          <p className="resend-text" onClick={handleResend}>
-            Resend OTP
-          </p>
-        ) : (
-          <p className="resend-text disabled">
-            Resend OTP in {timer}s
+        {/* 🔴 INLINE ERROR */}
+        {error && (
+          <p className="mt-3 text-sm text-red-400 text-center">
+            {error}
           </p>
         )}
+
       </div>
+
+      {/* 🔔 TOAST (BOTTOM CENTER) */}
+      {toast && (
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 
+        bg-green-500/10 text-green-400 border border-green-500/20
+        px-6 py-3 rounded-xl shadow-lg backdrop-blur-md">
+          ✔ {toast}
+        </div>
+      )}
     </div>
   );
 }

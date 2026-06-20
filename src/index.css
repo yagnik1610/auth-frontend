@@ -1,4 +1,19 @@
-body {
-  margin: 0;
-  font-family: sans-serif;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@keyframes border-glow {
+  0% {
+    box-shadow: 0 0 5px #6366f1;
+  }
+  50% {
+    box-shadow: 0 0 25px #6366f1;
+  }
+  100% {
+    box-shadow: 0 0 5px #6366f1;
+  }
+}
+
+.loading-glow {
+  animation: border-glow 1s infinite;
 }
